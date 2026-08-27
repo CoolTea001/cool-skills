@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#020420" />
+<title>CoolTest Report</title>
+<style>
+  :root{
+    --font-sans:'Public Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --color-green-400:#00DC82;
+    --color-green-300:#75EDAE;
+    --ui-radius:0.5rem;
+  }
+  .dark{
+    --ui-bg:#020420;
+    --ui-bg-muted:#0f172a;
+    --ui-bg-elevated:#111b2e;
+    --ui-bg-accented:#1e293b;
+    --ui-border:#1e293b;
+    --ui-border-muted:#162032;
+    --ui-text-dimmed:#475569;
+    --ui-text-muted:#94a3b8;
+    --ui-text-toned:#cbd5e1;
+    --ui-text-default:#e2e8f0;
+    --ui-text-highlighted:#f8fafc;
+  }
+  *{box-sizing:border-box}
+  html{scrollbar-gutter:stable}
+  body{
+    margin:0;
+    font-family:var(--font-sans);
+    background:var(--ui-bg);
+    color:var(--ui-text-default);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+  }
+  :focus-visible{outline:2px solid color-mix(in srgb, var(--color-green-400) 30%, transparent);outline-offset:2px}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:999px}
+  .wrap{max-width:none;width:100%;margin:0;padding:32px 24px 48px}
+  .title{
+    margin:0;
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    color:var(--ui-text-highlighted);
+  }
+  .suite-path{
+    margin-top:8px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    font-size:13px;color:var(--ui-text-muted);
+  }
+  .suite-path-text{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--ui-text-muted);
+  }
+  .suite-sep{color:var(--ui-text-dimmed);font-size:13px}
+  .suite-time{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--ui-text-muted);
+  }
+  /* controls: tabs + search on same line */
+  .controls{
+    margin-top:24px;
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:space-between;
+  }
+  .tabs{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .tab{
+    appearance:none;
+    padding:6px 14px;
+    border-radius:999px;
+    border:1px solid var(--ui-border);
+    background:var(--ui-bg-elevated);
+    color:var(--ui-text-muted);
+    font-family:var(--font-sans);
+    font-size:13px;font-weight:500;
+    cursor:pointer;white-space:nowrap;
+    transition: all .15s;
+    line-height:1.2;
+  }
+  .tab:hover{border-color:var(--ui-text-dimmed);color:var(--ui-text-default)}
+  .tab.active{
+    font-weight:600;
+  }
+  .tab b{margin-left:4px;font-weight:700}
+  /* default: unified color; only active shows status color */
+  .tab-all.active{background:var(--ui-text-highlighted);border-color:var(--ui-text-highlighted);color:var(--ui-bg)}
+  .tab-passed.active{background:var(--color-green-400);border-color:var(--color-green-400);color:#020420}
+  .tab-failed.active{background:#ef4444;border-color:#ef4444;color:#fff}
+  .tab-preview.active{background:#f59e0b;border-color:#f59e0b;color:#020420}
+  .tab-pending.active{background:#475569;border-color:#475569;color:#fff}
+  .search-wrap{position:relative;flex:0 0 260px;max-width:100%;margin-left:auto}
+  .search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ui-text-dimmed);pointer-events:none}
+  .search-input{
+    width:100%;height:36px;
+    padding:0 12px 0 34px;
+    background:var(--ui-bg-elevated);
+    border:1px solid var(--ui-border);
+    border-radius:999px;
+    color:var(--ui-text-default);
+    font-size:13px;font-family:var(--font-sans);
+  }
+  .search-input::placeholder{color:var(--ui-text-dimmed)}
+  .search-input:focus{outline:none;border-color:var(--color-green-400);box-shadow:0 0 0 3px color-mix(in srgb, var(--color-green-400) 14%, transparent)}
+  /* table */
+  .panel{margin-top:16px;border:1px solid var(--ui-border);border-radius:12px;overflow:hidden;background:var(--ui-bg-elevated)}
+  .table-wrap{overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:860px}
+  thead th{
+    text-align:left;
+    font-size:11px;font-weight:600;letter-spacing:.02em;
+    color:var(--ui-text-muted);
+    background:var(--ui-bg-muted);
+    padding:10px 14px;white-space:nowrap;
+    border-bottom:1px solid var(--ui-border);
+  }
+  tbody td{
+    padding:12px 14px;vertical-align:top;
+    border-bottom:1px solid var(--ui-border-muted);
+    color:var(--ui-text-default);
+  }
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:color-mix(in srgb, var(--ui-bg-accented) 45%, transparent)}
+  code{font-family:var(--font-mono);font-size:12px}
+  .cell-id{font-family:var(--font-mono);font-size:12px;color:var(--ui-text-toned);white-space:nowrap}
+  .cell-title{font-weight:500;color:var(--ui-text-highlighted);max-width:220px;line-height:1.4}
+  .cell-steps{max-width:280px}
+  .cell-steps ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+  .cell-steps li{font-size:12px;line-height:1.5;color:var(--ui-text-toned)}
+  .cell-steps li b{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--ui-text-muted);margin-right:4px}
+  .cell-steps li code{background:var(--ui-bg-accented);border:1px solid var(--ui-border-muted);padding:1px 4px;border-radius:4px;font-size:11px;color:var(--ui-text-muted)}
+  .cell-expected{max-width:180px;color:var(--ui-text-toned);font-size:13px}
+  .badge{
+    display:inline-flex;align-items:center;
+    padding:4px 10px;border-radius:999px;
+    font-size:11px;font-weight:600;letter-spacing:.02em;
+    border:1px solid;white-space:nowrap;line-height:1;
+  }
+  .badge.passed{background:color-mix(in srgb, var(--color-green-400) 10%, transparent);color:var(--color-green-300);border-color:color-mix(in srgb, var(--color-green-400) 18%, transparent)}
+  .badge.failed{background:color-mix(in srgb, #ef4444 10%, transparent);color:#fca5a5;border-color:color-mix(in srgb, #ef4444 18%, transparent)}
+  .badge.preview{background:color-mix(in srgb, #f59e0b 10%, transparent);color:#fcd34d;border-color:color-mix(in srgb, #f59e0b 18%, transparent)}
+  .badge.pending{background:color-mix(in srgb, #64748b 10%, transparent);color:#94a3b8;border-color:color-mix(in srgb, #64748b 18%, transparent)}
+  .cell-reason{max-width:200px;font-size:12px;line-height:1.5;color:var(--ui-text-toned)}
+  .cell-reason:empty::before{content:"—";color:var(--ui-text-dimmed)}
+  .btn-edit{
+    appearance:none;
+    padding:0;
+    border:none;
+    background:transparent;
+    color:var(--color-green-400);
+    font-size:13px;font-weight:600;font-family:var(--font-sans);
+    cursor:pointer;white-space:nowrap;
+    transition: color .15s;
+  }
+  .btn-edit:hover{color:var(--color-green-300);text-decoration:underline;text-underline-offset:3px}
+  .empty{padding:40px 24px;text-align:center;color:var(--ui-text-muted);font-size:13px;display:none}
+  .empty.show{display:block}
+  /* dialog */
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(2,4,32,0.6);
+    backdrop-filter: blur(4px);
+    display:none;align-items:center;justify-content:center;
+    padding:16px;z-index:50;
+  }
+  .overlay.open{display:flex}
+  .dialog{
+    width:100%;max-width:480px;
+    background:var(--ui-bg-elevated);
+    border:1px solid var(--ui-border);
+    border-radius:16px;
+    box-shadow: 0 16px 48px rgba(0,0,0,.5);
+    overflow:hidden;
+  }
+  .dialog-head{
+    padding:16px 20px 0;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .dialog-head h3{margin:0;font-size:14px;font-weight:600;color:var(--ui-text-highlighted)}
+  .dialog-head button{
+    appearance:none;background:var(--ui-bg-accented);border:1px solid var(--ui-border);
+    width:28px;height:28px;border-radius:999px;display:grid;place-items:center;
+    color:var(--ui-text-muted);cursor:pointer;
+  }
+  .dialog-head button:hover{color:var(--ui-text-highlighted)}
+  .dialog-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--ui-text-muted)}
+  .radio-group{display:flex;flex-wrap:wrap;gap:12px;padding:4px 0}
+  .radio{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--ui-text-toned);user-select:none}
+  .radio input{appearance:none;width:16px;height:16px;border-radius:999px;border:1.5px solid var(--ui-border);background:var(--ui-bg);display:grid;place-items:center;cursor:pointer;transition:border-color .15s, background .15s}
+  .radio input::after{content:"";width:7px;height:7px;border-radius:999px;background:var(--color-green-400);opacity:0;transition:opacity .15s}
+  .radio input:checked{border-color:var(--color-green-400)}
+  .radio input:checked::after{opacity:1}
+  .radio input:focus-visible{outline:2px solid color-mix(in srgb, var(--color-green-400) 30%, transparent);outline-offset:2px}
+  .radio:has(input:checked){color:var(--ui-text-highlighted);font-weight:600}
+  .field textarea{
+    width:100%;
+    background:var(--ui-bg);
+    border:1px solid var(--ui-border);
+    border-radius:10px;
+    color:var(--ui-text-default);
+    font-family:var(--font-sans);
+    font-size:13px;
+  }
+  .field textarea{min-height:84px;padding:10px;resize:vertical;line-height:1.5}
+  .field textarea:focus{outline:none;border-color:var(--color-green-400);box-shadow:0 0 0 3px color-mix(in srgb, var(--color-green-400) 14%, transparent)}
+  .field textarea::placeholder{color:var(--ui-text-dimmed)}
+  .dialog-foot{
+    padding:14px 20px 20px;
+    display:flex;justify-content:flex-end;gap:10px;
+    border-top:1px solid var(--ui-border-muted);
+  }
+  .btn{
+    appearance:none;
+    height:36px;padding:0 16px;border-radius:999px;
+    font-size:13px;font-weight:600;font-family:var(--font-sans);
+    cursor:pointer;border:1px solid transparent;transition: all .15s;
+  }
+  .btn-ghost{background:transparent;border-color:var(--ui-border);color:var(--ui-text-muted)}
+  .btn-ghost:hover{background:var(--ui-bg-accented);color:var(--ui-text-default)}
+  .btn-primary{background:var(--color-green-400);border-color:var(--color-green-400);color:#020420}
+  .btn-primary:hover{background:#00c16a;border-color:#00c16a}
+  @media(max-width:640px){
+    .wrap{padding:24px 16px 40px}
+    .title{font-size:20px}
+    .controls{flex-direction:column;align-items:stretch}
+    .search-wrap{flex:1 1 auto;margin-left:0}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="title">Cool Test</h1>
+    <div class="suite-path">
+      <span id="suitePath" class="suite-path-text">.cooltest/report-*.json</span>
+      <span class="suite-sep">·</span>
+      <span id="suiteTime" class="suite-time"></span>
+    </div>
+
+    <div class="controls">
+      <nav class="tabs" id="tabs" aria-label="Filter by status"></nav>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20L15.5 15.5"/></svg>
+        <input id="search" class="search-input" placeholder="Search..." />
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Id</th><th>Title</th><th>Steps</th><th>Expected</th><th>Status</th><th>Reason</th><th>Actions</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div id="empty" class="empty">No matching cases</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Dialog -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+    <div class="dialog">
+      <div class="dialog-head">
+        <h3 id="dialogTitle">Edit Case</h3>
+        <button id="btnClose" aria-label="Close">✕</button>
+      </div>
+      <div class="dialog-body">
+        <div class="field">
+          <label>Status</label>
+          <div class="radio-group" id="editStatusGroup">
+            <label class="radio"><input type="radio" name="editStatus" value="pending"><span>Pending</span></label>
+            <label class="radio"><input type="radio" name="editStatus" value="passed"><span>Success</span></label>
+            <label class="radio"><input type="radio" name="editStatus" value="failed"><span>Failed</span></label>
+            <label class="radio"><input type="radio" name="editStatus" value="preview"><span>Review</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="editReason">Reason</label>
+          <textarea id="editReason" placeholder="Enter reason..."></textarea>
+        </div>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn btn-ghost" id="btnCancel">Cancel</button>
+        <button class="btn btn-primary" id="btnSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+<script id="__COOLTEST_DATA__" type="application/json">{
+  "suiteName": "Example Suite (replace with real report JSON)",
+  "createdAt": "2026-08-27T07:30:00.000Z",
+  "source": { "type": "paste", "summary": "Example data" },
+  "cases": [
+    {
+      "id": "TC-001",
+      "title": "Login should succeed with valid password",
+      "type": "web",
+      "steps": [
+        { "action": "open", "target": "https://example.com/login", "description": "Open login page" },
+        { "action": "input", "target": "#username", "value": "demo", "description": "Enter username" },
+        { "action": "click", "target": "#login-btn", "description": "Click login" },
+        { "action": "assert", "target": "url", "value": "https://example.com/home", "description": "Assert redirect" }
+      ],
+      "expected": "Redirect to homepage",
+      "status": "passed",
+      "reason": ""
+    },
+    {
+      "id": "TC-002",
+      "title": "QR login requires manual review",
+      "type": "web",
+      "steps": [{ "action": "custom", "target": "qr", "description": "Requires device scan" }],
+      "expected": "Login after scanning",
+      "status": "preview",
+      "reason": "Requires physical QR scan, cannot be automated"
+    },
+    {
+      "id": "TC-003",
+      "title": "Empty password should show validation error",
+      "type": "web",
+      "steps": [
+        { "action": "open", "target": "https://example.com/login", "description": "Open login page" },
+        { "action": "input", "target": "#username", "value": "test_user", "description": "Enter username" },
+        { "action": "click", "target": "#login-btn", "description": "Click login without password" },
+        { "action": "assert", "target": "#error-msg", "value": "Password is required", "description": "Assert validation message" }
+      ],
+      "expected": "Show validation error",
+      "status": "failed",
+      "reason": "No error message displayed"
+    }
+  ]
+}</script>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  let raw = {};
+  try{ raw = JSON.parse(document.getElementById('__COOLTEST_DATA__').textContent.trim()||'{}'); }catch(e){ raw={suiteName:'',createdAt:'',cases:[]}; }
+
+  const ts = raw.createdAt || new Date().toISOString();
+  const tsFile = ts.replace(/[:.]/g,'-');
+  const suitePath = '.cooltest/report-' + tsFile + '.json';
+  const sp = document.getElementById('suitePath'); if(sp) sp.textContent = suitePath;
+  const d = new Date(ts);
+  const pad = n=>String(n).padStart(2,'0');
+  const timeStr = isNaN(d) ? ts : `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  const st = document.getElementById('suiteTime'); if(st) st.textContent = timeStr;
+
+  // localStorage persistence for edits
+  const lsKey = 'cooltest:' + ts;
+  const saved = localStorage.getItem(lsKey);
+  let data = raw;
+  if(saved){ try{ data = JSON.parse(saved); }catch(_){} }
+  function saveLocal(){ try{ localStorage.setItem(lsKey, JSON.stringify(data)); }catch(_){} }
+
+  function getCounts(){
+    const c={all:0, passed:0, failed:0, preview:0, pending:0};
+    (data.cases||[]).forEach(x=>{ c.all++; if(c[x.status]!==undefined) c[x.status]++; });
+    return c;
+  }
+
+  const tabsDef = [
+    {key:'all', label:'All'},
+    {key:'passed', label:'Success'},
+    {key:'failed', label:'Failed'},
+    {key:'preview', label:'Review'},
+    {key:'pending', label:'Pending'},
+  ];
+  let active = 'all';
+  const tabsEl = $('#tabs');
+  function renderTabs(){
+    const counts=getCounts();
+    tabsEl.innerHTML = tabsDef.map(t=>{
+      const cnt = t.key==='all' ? counts.all : counts[t.key];
+      return `<button class="tab tab-${t.key} ${active===t.key?'active':''}" data-key="${t.key}">${t.label} · <b>${cnt}</b></button>`;
+    }).join('');
+  }
+  renderTabs();
+  tabsEl.addEventListener('click', e=>{
+    const btn = e.target.closest('.tab');
+    if(!btn) return;
+    active = btn.dataset.key;
+    renderTabs();
+    renderTable();
+  });
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  // dialog state
+  let editIndex = -1;
+  const overlay=$('#overlay'), editReason=$('#editReason');
+  function getEditStatus(){ const c=document.querySelector('input[name="editStatus"]:checked'); return c?c.value:'pending'; }
+  function setEditStatus(v){ const r=document.querySelector(`input[name="editStatus"][value="${v}"]`); if(r) r.checked=true; }
+  function openDialog(idx){
+    editIndex = idx;
+    const cs = data.cases[idx];
+    setEditStatus(cs.status || 'pending');
+    editReason.value = cs.reason || '';
+    $('#dialogTitle').textContent = 'Edit ' + cs.id;
+    overlay.classList.add('open');
+    const f=document.querySelector('input[name="editStatus"]:checked'); if(f) f.focus();
+  }
+  function closeDialog(){
+    overlay.classList.remove('open');
+    editIndex=-1;
+  }
+
+  function renderTable(){
+    const q = ($('#search').value||'').toLowerCase().trim();
+    const tbody = $('#tbody');
+    tbody.innerHTML='';
+    let shown=0;
+    (data.cases||[]).forEach((cs, idx)=>{
+      if(active!=='all' && cs.status!==active) return;
+      const hay = (cs.id+' '+cs.title+' '+(cs.expected||'')+' '+(cs.reason||'')).toLowerCase();
+      if(q && !hay.includes(q)) return;
+      shown++;
+      const tr=document.createElement('tr');
+      const stepsHtml = (cs.steps||[]).map(s=>{
+        const t = s.target? `<code>${escapeHtml(s.target)}</code>` : '';
+        const v = s.value? ` ${escapeHtml(String(s.value).slice(0,60))}` : '';
+        const d = s.description? ` — ${escapeHtml(s.description)}` : '';
+        return `<li><b>${escapeHtml(s.action)}</b>${t}${v}${d}</li>`;
+      }).join('');
+      const badgeCls = ({passed:'passed', failed:'failed', preview:'preview', pending:'pending'}[cs.status]||'pending');
+      const badgeLabel = cs.status==='passed' ? 'Success' : cs.status==='preview' ? 'Review' : cs.status.charAt(0).toUpperCase()+cs.status.slice(1);
+      tr.innerHTML = `
+        <td class="cell-id">${escapeHtml(cs.id)}</td>
+        <td><div class="cell-title">${escapeHtml(cs.title)}</div></td>
+        <td class="cell-steps"><ol>${stepsHtml || '<li>—</li>'}</ol></td>
+        <td class="cell-expected">${escapeHtml(cs.expected||'—')}</td>
+        <td><span class="badge ${badgeCls}">${badgeLabel}</span></td>
+        <td><div class="cell-reason">${escapeHtml(cs.reason||'')}</div></td>
+        <td><button class="btn-edit" data-idx="${idx}">Edit</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    $('#empty').classList.toggle('show', shown===0);
+  }
+
+  $('#search').addEventListener('input', renderTable);
+  document.addEventListener('click', e=>{
+    const btn=e.target.closest('.btn-edit');
+    if(btn){ openDialog(Number(btn.dataset.idx)); }
+  });
+  $('#btnClose').addEventListener('click', closeDialog);
+  $('#btnCancel').addEventListener('click', closeDialog);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeDialog(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && overlay.classList.contains('open')) closeDialog(); });
+  $('#btnSave').addEventListener('click', ()=>{
+    if(editIndex<0) return;
+    data.cases[editIndex].status = getEditStatus();
+    data.cases[editIndex].reason = editReason.value.trim();
+    saveLocal();
+    renderTabs();
+    renderTable();
+    closeDialog();
+  });
+
+  renderTable();
+})();
+</script>
+</body>
+</html>
