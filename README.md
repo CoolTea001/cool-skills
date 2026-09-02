@@ -18,6 +18,8 @@ npx skills update                             # update
 
 | Skill | Description |
 |-------|-------------|
+| [cool-design](./skills/cool-design/SKILL.md) | Nuxt design system, powered by Nuxt UI and Tailwind CSS v4. Dark mode is the default theme. Use for all UI implementation and page design tasks. |
+| [cool-teach](./skills/cool-teach/SKILL.md) | A teaching skill for multi-course workspaces (`.coolteach`) — creates courses, generates bite-sized lessons with frozen task types, and opens a fixed-template local preview (fixes single-course, inconsistent style & fragile exercise bugs). |
 | [cool-test](./skills/cool-test/SKILL.md) | A web automated testing Skill that converts test cases / requirements / source in any format into a JSON test suite, runs tests, and finally generates an editable offline report. |
 
 ## License

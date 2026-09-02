@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#020420" />
+<meta name="color-scheme" content="dark" />
+<title>CoolTeach — Course Preview</title>
+<link rel="stylesheet" href="../../assets/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark">CT</div>
+        <div class="brand-text">CoolTeach</div>
+      </div>
+      <div class="header-main">
+        <h1 id="courseTitle" class="course-title">Loading…</h1>
+        <p id="courseDesc" class="course-desc"></p>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progress</span><span id="progressText">0 / 0</span></div>
+        <div class="progress-bar"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <p class="sidebar-title">Lessons</p>
+      <nav id="navList" class="nav-list" aria-label="Lessons"></nav>
+    </aside>
+    <main id="main" class="main"></main>
+  </div>
+
+<script>window.__COURSE__ = {"slug":"demo","title":"Demo Course — Replace with real data","description":"Run /cool-teach to generate a real course preview.","mission":{"why":"","success":[],"constraints":[]}};</script>
+<!-- LESSONS -->
+<script src="./lessons/0001-demo-lesson.js"></script>
+<script src="../../assets/app.js"></script>
+</body>
+</html>
