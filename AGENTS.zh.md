@@ -4,6 +4,7 @@
 
 1. commit 前检查是否包含临时文件、大文件、敏感内容（密钥、token、.env）。
 2. commit message 使用英文生成。
+3. 未经用户明确要求时，禁止自行执行 git commit / git push；
 
 ## 文档语言
 

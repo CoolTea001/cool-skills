@@ -26,11 +26,13 @@ skills/cool-teach/assets/
 
 ## Generation
 
+0. Version check (mandatory): read `skills/cool-teach/VERSION` → `SKILL_VER`; verify `.coolteach/assets/app.js` contains `TEMPLATE_VERSION = '<SKILL_VER>'`, re-copying all shared assets from `skills/cool-teach/assets/` on mismatch. Any `assets/` change must bump `VERSION`, the `version:` frontmatter in `SKILL.md`/`SKILL.zh.md`, and `TEMPLATE_VERSION` in `app.js` together.
 1. Read `courses/<slug>/course.json` and all `lessons/*.js` (sorted). Each `*.js` is `window.__LESSONS__.push({...})` — validate the pushed object against `references/lesson-format.md`.
 2. Optionally pre-render `body` Markdown to `bodyHtml` (recommended for fidelity). If `bodyHtml` is empty, the template's tiny parser renders `body` as fallback.
 3. Generate `preview.html` from `assets/template.html`:
    - Inline course once: `<script>window.__COURSE__ = <JSON>;</script>` (use `JSON.stringify` and escape `</script>`).
-   - Embed lessons in order: one `<script src="./lessons/NNNN-*.js"></script>` per lesson (sorted), then `../../assets/app.js`. No `data.js` aggregation — each lesson JS is directly referenced (still `file://` safe via `<script src>`).
+   - Inline generator meta: `<script>window.__COOLTEACH_META__ = {"templateVersion":"<SKILL_VER>","generatedAt":"<ISO-8601>"};</script>`; replace `{{COOLTEACH_VERSION}}` with `SKILL_VER` and `{{GENERATED_AT}}` with the current ISO-8601 timestamp.
+   - Embed lessons in order: one `<script src="./lessons/NNNN-*.js"></script>` per lesson (sorted), then `../../assets/marked.min.js` and `../../assets/app.js`. No `data.js` aggregation — each lesson JS is directly referenced (still `file://` safe via `<script src>`).
    - Keep `course.json` / `lessons/*.js` as source of truth on disk; `preview.html` is derived.
 
 ## Display

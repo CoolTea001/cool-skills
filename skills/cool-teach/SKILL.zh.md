@@ -1,11 +1,12 @@
 ---
 name: cool-teach
-description: 多课程学习工作区技能（.coolteach）—— 创建课程、生成带校验任务的小课、并用固定 HTML 模板打开本地预览。当用户以 /cool-teach 加自然语言触发时使用，例如“/cool-teach 我想学习 SEO”“/cool-teach 继续学习 SEO”“/cool-teach 查看我有哪些课程”“/cool-teach 打开 SEO 课程”。
+version: 0.3.6
+description: 多课程学习工作区技能（.coolteach）—— 创建课程、生成带校验任务的小课、并用固定 HTML 模板打开本地预览。当用户用自然语言表达课程学习意图时使用，例如“我想学习 SEO”“继续学习 SEO”“查看我有哪些课程”“打开 SEO 课程”；/cool-teach 前缀也可接受，但不是必须的。
 ---
 
 # Cool Teach — 多课程学习工作区
 
-> 触发：`/cool-teach` 前缀 + 自然语言。未带此前缀的自然语言不自动触发。` /cool-teach` 后的文本为自由意图描述，用 LLM 判别。示例：`/cool-teach 我想学习 SEO` · `/cool-teach 继续学习 SEO` · `/cool-teach 查看我有哪些课程` · `/cool-teach 打开 SEO 课程`
+> 触发：表达课程学习意图的自然语言——无需前缀（`/cool-teach` 前缀同样接受，含义相同）。用 LLM 判别自由意图。示例：`我想学习 SEO` · `继续学习 SEO` · `查看我有哪些课程` · `打开 SEO 课程`
 
 ## 目录结构（简化版）
 
@@ -34,14 +35,14 @@ description: 多课程学习工作区技能（.coolteach）—— 创建课程�
 
 ### 1. 触发与解析
 
-1. 触发为 `/cool-teach` **前缀**（必须以 `/cool-teach` 开头），其后的文本为**自由的自然语言意图**，用 LLM 判别意图：
-   - **查看** — 如 `/cool-teach 查看我有哪些课程` / `/cool-teach 有哪些课` → 列出 `.coolteach/courses.json` 全部课程。
-   - **新建** — 如 `/cool-teach 我想学习 SEO` / `/cool-teach 想学 Rust CLI` → 新建课程（随后进入学习目标访谈）。
-   - **继续/新增课件** — 如 `/cool-teach 继续学习 SEO` / `/cool-teach 给 SEO 加一课` → 为已匹配课程新增一课。
-   - **打开/预览** — 如 `/cool-teach 打开 SEO 课程` / `/cool-teach 预览 SEO` → 重新生成并打开该课程的 `preview.html`。
-   - **仅 `/cool-teach`**（无后续文本）→ 交互式：列出课程，询问继续哪一门或是否新建。
+1. 触发为表达课程学习意图的**自然语言**，无需前缀。可选的 `/cool-teach` 前缀同样接受且等价（解析前先剥离）。用 LLM 判别意图：
+   - **查看** — 如 `查看我有哪些课程` / `有哪些课` → 列出 `.coolteach/courses.json` 全部课程。
+   - **新建** — 如 `我想学习 SEO` / `想学 Rust CLI` → 新建课程（随后进入学习目标访谈）。
+   - **继续/新增课件** — 如 `继续学习 SEO` / `给 SEO 加一课` → 为已匹配课程新增一课。
+   - **打开/预览** — 如 `打开 SEO 课程` / `预览 SEO` → 重新生成并打开该课程的 `preview.html`。
+   - **意图不明/仅打招呼** → 交互式：列出课程，询问继续哪一门或是否新建。
 2. 从自然语言中用 LLM 抽取课程主题/slug（如“SEO”→`seo`，“Rust CLI”→`rust-cli`），含糊时向用户确认推导的 slug。
-3. 未带 `/cool-teach` 前缀的自然语言（如“教我 SEO”）不自动触发，请回复：`请执行 /cool-teach ... 开始`（如 `请执行 /cool-teach 我想学习 SEO`）。
+3. 仅在真正的课程学习意图（新建、继续、查看、打开课程）时触发，无关闲聊不得激活本技能。
 
 ### 2. 初始化 `.coolteach`
 
@@ -75,7 +76,7 @@ cp skills/cool-teach/assets/app.js     .coolteach/assets/app.js     2>/dev/null 
 
 > **未完成学习目标访谈前不得创建课程。** 目标是所有教学的罗盘，目标不清会导致课件空泛、无法判断 ZPD。
 
-1. **学习目标访谈（阻塞式，写任何文件前必须完成）** — 采用**一次一问的交互式访谈**。即使用户已通过 `/cool-teach 我想学习 SEO` 给出主题，仍需先访谈再写入。**每题单独调用一次 `ask_user_question`**，**默认提供 3 个选项并允许用户自定义输入**（可直接选或自己输入答案），答完一题再问下一题：
+1. **学习目标访谈（阻塞式，写任何文件前必须完成）** — 采用**一次一问的交互式访谈**。即使用户已通过 `我想学习 SEO` 给出主题，仍需先访谈再写入。**每题单独调用一次 `ask_user_question`**，**默认提供 3 个选项并允许用户自定义输入**（可直接选或自己输入答案），答完一题再问下一题：
    - **第1问 为什么学** — 1–3 句：掌握后在工作/生活中具体会发生什么变化（逼问“以便……”而非“想了解……”）。示例选项：`为独立站带来可持续自然流量，降低付费依赖` / `能独立交付一个可用成果到项目中` / `解决当前工作中的具体瓶颈` + 自定义输入。
    - **第2问 成功是什么样** — 2–3 个可观察的能力（例“能独立完成关键词研究 → 重写 1 个页面 → 拿到前 20 排名”）。示例选项：`能独立端到端完成一次小实战` / `能用清单复盘并优化现有页面/项目` / `会看数据并持续迭代` + 自定义输入。
    - **第3问 约束** — 时间投入（例 1h/周）、已有基础、偏好、范围边界。示例选项：`每周1小时，偏实战少理论` / `每周2小时，有一点基础想快速见效` / `每周4小时，想系统深入` + 自定义输入。
@@ -118,7 +119,7 @@ cp skills/cool-teach/assets/app.js     .coolteach/assets/app.js     2>/dev/null 
 
 #### 继续/选择
 
-用户执行仅 `/cool-teach` 或意图含糊且存在多门课程时，列出课程并让用户选择继续哪一门或新建。
+意图含糊且存在多门课程时，列出课程并让用户选择继续哪一门或新建。
 
 ### 4. 生成课件
 
@@ -182,13 +183,25 @@ window.__LESSONS__.push({
 
 **不再逐课手写 HTML。** 所有预览由唯一的固定模板 `skills/cool-teach/assets/template.html` 渲染。
 
+#### 5.0 版本校验（每次生成前必须执行）
+
+`skills/cool-teach/VERSION` 是唯一的版本权威来源（如 `0.1.0`）：
+
+1. 读取 `skills/cool-teach/VERSION` → `SKILL_VER`。
+2. 检查 `.coolteach/assets/app.js` 是否包含 `TEMPLATE_VERSION = '<SKILL_VER>'`。若文件缺失或版本不一致，先从 `skills/cool-teach/assets/` 重拷全部共享资源（`style.css`、`app.js`、`marked.min.js`、`template.html`），再生成预览——绝不拿过期资源生成预览。
+3. 生成 `preview.html` 时，将 `{{COOLTEACH_VERSION}}` 替换为 `SKILL_VER`、`{{GENERATED_AT}}` 替换为当前 ISO-8601 时间（用于填充页头品牌 `vX.Y.Z` 与 `window.__COOLTEACH_META__`）。
+4. 升级规则：任何 `assets/` 改动必须同步 bump `VERSION`、上方的 `version:` frontmatter 与 `app.js` 中的 `TEMPLATE_VERSION`。
+
+运行时 `app.js` 会对比 `window.__COOLTEACH_META__.templateVersion` 与 `TEMPLATE_VERSION`；不一致时页头版本号标红并输出 `console.warn`——重新生成预览即可修复。
+
 #### 构建步骤
 
 1. 读取 `course.json` 与全部 `lessons/*.js`（按文件名排序），每课为 `window.__LESSONS__.push({...})`，校验推送对象是否符合 `references/lesson-format.md`。
 2. （可选）将 `body` Markdown 预渲染为 `bodyHtml`，使模板可为纯 HTML+JS；若未预渲染，模板微型解析器会以降级渲染 `body`。
 3. 从固定模板生成 `preview.html`：
    - 内联课程数据一次：`<script>window.__COURSE__ = <JSON>;</script>`（`JSON.stringify` 并转义 `</script>`）
-   - 按序为每课生成 `<script src="./lessons/NNNN-*.js"></script>`（已排序），最后加载 `../../assets/app.js`。不再生成 `data.js` 聚合文件——每课 JS 直接被引用。
+   - 内联生成器元信息：`<script>window.__COOLTEACH_META__ = {"templateVersion":"<SKILL_VER>","generatedAt":"<ISO-8601>"};</script>`
+   - 按序为每课生成 `<script src="./lessons/NNNN-*.js"></script>`（已排序），最后加载 `../../assets/marked.min.js` 与 `../../assets/app.js`。不再生成 `data.js` 聚合文件——每课 JS 直接被引用。
    - `course.json` / `lessons/*.js` 仍为磁盘上的权威来源；`preview.html` 为派生。
 
 #### 模板保证
