@@ -130,11 +130,17 @@ Each `tasks[]` entry is **exactly one JSON object**. The template's JS freezes 4
 
 ## Validation (Agent Must Run Before Write)
 
-1. Whole lesson JSON parses.
-2. Required lesson fields present with correct types.
-3. `tasks` length 2–5, each `type` ∈ 4, required task fields present, range/length checks pass per table above.
+1. **JS syntax check (mandatory, prevents Untitled Course bug):** the file must be valid JS that pushes to `window.__LESSONS__`. Run:
+   ```bash
+   node -e "global.window={}; eval(require('fs').readFileSync('lessons/0001-xxx.js','utf8')); console.log(window.__LESSONS__.length)"
+   ```
+   Must print `1` with no `SyntaxError: Invalid or unexpected token`. If it throws, the `body`/`tasks` strings were not escaped — regenerate with `JSON.stringify(lesson, null, 2)` and re-check. **Never hand-concatenate** `{"body": "${body}"}`.
+2. Whole lesson JSON round-trips: `JSON.parse(JSON.stringify(lesson))` succeeds.
+3. Required lesson fields present with correct types.
+4. `tasks` length 2–5, each `type` ∈ 4, required task fields present, range/length checks pass per table above.
+5. `</script>` inside `body` is escaped as `<\/script>` so `preview.html` does not break.
 
-If invalid → fix and re-validate; never write broken lessons. The template will show a non-breaking error card (`Invalid task: <reason>`) for any task that fails validation, without crashing the page.
+If any check fails → fix and re-validate; never write broken lessons. A broken lesson JS silently yields `Untitled Course` / `No lessons yet` and does **not** show the `Invalid task` card (that card only catches broken *task* JSON, not broken *file* syntax). The template will show a non-breaking error card (`Invalid task: <reason>`) for any task that fails validation, without crashing the page.
 
 ## Rendering
 

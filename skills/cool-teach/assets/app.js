@@ -84,7 +84,7 @@
   function saveState(){ try{ localStorage.setItem(lsKey, JSON.stringify(state)); }catch(_){} }
 
   // --- template version (must match skills/cool-teach/VERSION) ---
-  var TEMPLATE_VERSION = '0.3.6';
+  var TEMPLATE_VERSION = '0.3.7';
   function checkVersion(){
     var meta = window.__COOLTEACH_META__ || {};
     var verEl = document.querySelector('[data-version]');

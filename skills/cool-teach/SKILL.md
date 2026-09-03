@@ -1,6 +1,6 @@
 ---
 name: cool-teach
-version: 0.3.6
+version: 0.3.7
 description: A teaching skill for multi-course learning workspaces (.coolteach) — creates courses, generates bite-sized lessons with validated tasks, and opens a local web preview using a fixed HTML template. Use when the user expresses a course-learning intent in natural language (e.g. "I want to learn SEO", "continue SEO", "list my courses", "open SEO"); a /cool-teach prefix is also accepted but not required.
 ---
 
@@ -146,6 +146,35 @@ Rules:
 - Tasks: array of **frozen task JSON objects** (see below). No free-form quizzes. Each task must validate against the frozen schema. Generate 2–5 tasks per lesson.
 - Do **not** inline `<style>` or `<script>` in lessons. All rendering is done by the fixed template.
 
+#### Generation Rule (Critical — prevents `Untitled Course` / `No lessons yet`)
+
+> **Never hand-concatenate the lesson JS string.** The `body` Markdown routinely contains `"`, `'`, `` ` ``, `\n`, and `</script>` — manual interpolation breaks the file and the preview silently falls back to `Untitled Course` with empty lessons (the exact bug fixed in v0.3.7).
+
+**Must do:**
+```js
+// 1. Build a plain JS object
+const lesson = { id, slug, title, summary, tags, body, bodyHtml: "", tasks };
+// 2. Serialize with JSON.stringify — it escapes ", \, \n, etc. for you
+const out = 'window.__LESSONS__ = window.__LESSONS__ || [];\n'
+        + 'window.__LESSONS__.push(' + JSON.stringify(lesson, null, 2) + ');\n';
+// 3. Escape </script> so the preview HTML never breaks
+const safe = out.replace(/<\/script>/gi, '<\\/script>');
+fs.writeFileSync(`lessons/${id}-${slug}.js`, safe, 'utf8');
+```
+
+**Forbidden:**
+```js
+// ❌ breaks on any " inside body
+fs.writeFileSync(`lessons/${id}-${slug}.js`,
+  `window.__LESSONS__.push({"body": "${body}"})`); // body contains " → SyntaxError
+```
+
+**Validation before write (mandatory):**
+```bash
+node -e "global.window={}; eval(require('fs').readFileSync('lessons/0001-xxx.js','utf8')); console.log('lessons', window.__LESSONS__.length)"
+# must print 1 and not throw "Invalid or unexpected token"
+```
+
 #### Frozen Task Schema (4 types only)
 
 To eliminate interaction bugs, the template JS implements **exactly** these four types; the agent must not invent new types.
@@ -164,11 +193,12 @@ Example:
 {"id":"0001-task-1","type":"choice","question":"抓取→索引→排名的正确顺序是？","options":["抓取→索引→排名","索引→抓取→排名","排名→抓取→索引","抓取→排名→索引"],"answer":0,"explain":"爬虫先发现，再入库，才有资格排名。"}
 ```
 
-Validation before write:
-- JSON parses.
+Validation before write (all must pass):
+- `node -e` eval above passes — lesson JS parses and `window.__LESSONS__` is non-empty (catches unescaped `"` / `</script>` bugs).
+- Lesson JSON parses (`JSON.parse(JSON.stringify(lesson))` round-trip).
 - `type` is one of the 4.
-- Required fields present and types correct.
-- If invalid, fix and re-validate; never write broken tasks.
+- Required task fields present and types correct; `answer` ranges, `steps` checks, etc. per table.
+- If any check fails, fix and re-validate; never write broken lessons. A broken lesson silently produces `Untitled Course` / `No lessons yet` — treat it as a blocker.
 
 ### 5. Preview Generation (Fixed Template)
 

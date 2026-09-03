@@ -1,6 +1,6 @@
 ---
 name: cool-teach
-version: 0.3.6
+version: 0.3.7
 description: 多课程学习工作区技能（.coolteach）—— 创建课程、生成带校验任务的小课、并用固定 HTML 模板打开本地预览。当用户用自然语言表达课程学习意图时使用，例如“我想学习 SEO”“继续学习 SEO”“查看我有哪些课程”“打开 SEO 课程”；/cool-teach 前缀也可接受，但不是必须的。
 ---
 
@@ -155,6 +155,32 @@ window.__LESSONS__.push({
 - 习题：`tasks` 数组内为冻结任务 JSON 对象（见下）。不得手写自由格式测验。每题必须通过冻结 Schema 校验，生成 2–5 题。
 - 不得在课件中内联 `<style>` 或 `<script>`，所有渲染由固定模板完成。
 
+#### 生成规则（关键 — 防止 `Untitled Course` / `No lessons yet`）
+
+> **严禁手写拼接课件 JS 字符串。** `body` Markdown 中必然包含 `"`、`'`、`` ` ``、`\n`、`</script>` 等，手写拼接会直接语法报错，预览静默回退为 `Untitled Course` 且无课时（v0.3.7 修复的正是此 BUG）。
+
+**必须这样做：**
+```js
+const lesson = { id, slug, title, summary, tags, body, bodyHtml: "", tasks };
+const out = 'window.__LESSONS__ = window.__LESSONS__ || [];\n'
+        + 'window.__LESSONS__.push(' + JSON.stringify(lesson, null, 2) + ');\n';
+const safe = out.replace(/<\/script>/gi, '<\\/script>');
+fs.writeFileSync(`lessons/${id}-${slug}.js`, safe, 'utf8');
+```
+
+**禁止：**
+```js
+// ❌ body 中任意 " 都会导致 SyntaxError
+fs.writeFileSync(`lessons/${id}-${slug}.js`,
+  `window.__LESSONS__.push({"body": "${body}"})`);
+```
+
+**写入前必须校验：**
+```bash
+node -e "global.window={}; eval(require('fs').readFileSync('lessons/0001-xxx.js','utf8')); console.log('lessons', window.__LESSONS__.length)"
+# 必须输出 1 且不抛 Invalid or unexpected token
+```
+
 #### 冻结的习题 Schema（仅 4 种）
 
 为杜绝交互 BUG，模板 JS 仅实现以下 4 种，Agent 不得自创类型。
@@ -173,11 +199,12 @@ window.__LESSONS__.push({
 {"id":"0001-task-1","type":"choice","question":"抓取→索引→排名的正确顺序？","options":["抓取→索引→排名","索引→抓取→排名","排名→抓取→索引","抓取→排名→索引"],"answer":0,"explain":"先被爬虫发现，再入库，才有资格参与排名。"}
 ```
 
-写入前校验：
-- JSON 可解析。
+写入前校验（全部必须通过）：
+- 上述 `node -e` 能正常执行且 `window.__LESSONS__` 非空（捕获未转义 `"` / `</script>` 的语法错误）。
+- 课件 JSON 可解析（`JSON.parse(JSON.stringify(lesson))` 往返通过）。
 - `type` 为 4 种之一。
-- 必填字段齐全且类型正确。
-- 校验失败则修复后重验，绝不写入破损任务。
+- 必填字段齐全且类型正确，`answer` 范围、`steps` 等按表格校验。
+- 任一项失败则修复后重验，绝不写入破损课件。破损课件会静默导致 `Untitled Course` / `No lessons yet`，视为阻塞性错误。
 
 ### 5. 预览生成（固定模板）
 
