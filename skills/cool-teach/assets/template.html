@@ -9,29 +9,29 @@
 <link rel="stylesheet" href="../../assets/style.css" />
 </head>
 <body>
-  <header class="header">
-    <div class="header-inner">
-      <div class="brand">
-        <div class="brand-mark">CT</div>
-        <div class="brand-text">CoolTeach</div>
-      </div>
-      <div class="header-main">
+  <div class="wrap">
+    <div class="inner">
+      <div class="title-block">
         <h1 id="courseTitle" class="course-title">Loading…</h1>
+      </div>
+      <div class="desc-block">
         <p id="courseDesc" class="course-desc"></p>
       </div>
-      <div class="progress-wrap">
-        <div class="progress-label"><span>Progress</span><span id="progressText">0 / 0</span></div>
-        <div class="progress-bar"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+      <div class="spacer-top" aria-hidden="true"></div>
+      <div class="section-divider" aria-hidden="true"></div>
+      <div class="main-row">
+        <aside class="lesson-list">
+          <div class="list-head">
+            <span id="lessonCount" class="list-title">Lessons · 0</span>
+            <span id="progressInline" class="list-progress">0 / 0</span>
+          </div>
+          <nav id="navList" class="nav-cards" aria-label="Lessons"></nav>
+          <!-- hidden progress for legacy JS compat -->
+          <div style="display:none"><span id="progressText">0 / 0</span><div id="progressFill" style="width:0%"></div></div>
+        </aside>
+        <main id="main" class="content-block"></main>
       </div>
     </div>
-  </header>
-
-  <div class="layout">
-    <aside class="sidebar">
-      <p class="sidebar-title">Lessons</p>
-      <nav id="navList" class="nav-list" aria-label="Lessons"></nav>
-    </aside>
-    <main id="main" class="main"></main>
   </div>
 
 <script>window.__COURSE__ = {"slug":"demo","title":"Demo Course — Replace with real data","description":"Run /cool-teach to generate a real course preview.","mission":{"why":"","success":[],"constraints":[]}};</script>
