@@ -20,6 +20,13 @@
 - 表格列：`ID | 标题 | 类型 | 步骤数 | 期望 | 状态 | 原因/证据 | 操作`。
 - `preview` 行高亮（琥珀色），`failed` 高亮（红色）。
 
+## 主题（深色 / 浅色）
+
+- 报告支持深色与浅色两种主题，默认深色。
+- **右上角**的图标按钮点击即可切换主题（太阳 ⇄ 月亮）。
+- 选择会持久化到 `localStorage: cooltest:theme`，刷新后保持；首次加载时回退到系统 `prefers-color-scheme`。
+- 主题在首次绘制前应用，避免闪烁；同时同步更新 `theme-color` meta 标签。
+
 ## 可编辑与回写
 
 用户可在表格中直接修改每行 `status`（下拉：`passed/failed/preview/pending`）和 `reason`。

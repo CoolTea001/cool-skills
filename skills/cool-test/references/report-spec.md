@@ -20,6 +20,13 @@
 - Table columns: `ID | Title | Type | Steps | Expected | Status | Reason/Evidence | Actions`.
 - `preview` rows highlighted (amber), `failed` highlighted (red).
 
+## Theme (Dark / Light)
+
+- The report supports both dark and light themes. Dark is the default.
+- An icon button in the **top-right** header toggles the theme on click (sun ⇄ moon).
+- The choice is persisted in `localStorage: cooltest:theme` and survives refreshes; on first load it falls back to the OS `prefers-color-scheme`.
+- Theme is applied before first paint to avoid a flash, and the `theme-color` meta tag is updated accordingly.
+
 ## Editable & Write-back
 
 Users can directly edit each row's `status` (dropdown: `passed/failed/preview/pending`) and `reason` in the table.

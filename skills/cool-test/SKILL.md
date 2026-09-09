@@ -85,6 +85,7 @@ Naming convention — **flat timestamp**:
      - Prefer File System Access API to write back to `report-<ts>.json`;
      - Fallback to triggering download of `report-<ts>.json` with overlay prompt, plus `localStorage` cache.
    - Provide filtering (by status/type) and CSV export.
+   - A top-right icon button toggles dark/light theme; the choice persists via `localStorage`.
 
 ## References
 

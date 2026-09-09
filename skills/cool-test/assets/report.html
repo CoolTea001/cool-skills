@@ -3,8 +3,22 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#020420" />
+<meta name="theme-color" content="#020420" id="themeColorMeta" />
 <title>CoolTest Report</title>
+<script>
+  /* Apply persisted / preferred theme before first paint to avoid a flash. */
+  (function(){
+    var t = 'dark';
+    try{
+      var saved = localStorage.getItem('cooltest:theme');
+      if(saved === 'light' || saved === 'dark'){ t = saved; }
+      else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches){ t = 'light'; }
+    }catch(e){}
+    var root = document.documentElement;
+    root.classList.toggle('dark', t === 'dark');
+    root.dataset.theme = t;
+  })();
+</script>
 <style>
   :root{
     --font-sans:'Public Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -12,6 +26,18 @@
     --color-green-400:#00DC82;
     --color-green-300:#75EDAE;
     --ui-radius:0.5rem;
+    /* light theme (default when .dark is absent) */
+    --ui-bg:#ffffff;
+    --ui-bg-muted:#f8fafc;
+    --ui-bg-elevated:#ffffff;
+    --ui-bg-accented:#f1f5f9;
+    --ui-border:#e2e8f0;
+    --ui-border-muted:#eef2f6;
+    --ui-text-dimmed:#94a3b8;
+    --ui-text-muted:#64748b;
+    --ui-text-toned:#475569;
+    --ui-text-default:#334155;
+    --ui-text-highlighted:#0f172a;
   }
   .dark{
     --ui-bg:#020420;
@@ -39,7 +65,28 @@
   :focus-visible{outline:2px solid color-mix(in srgb, var(--color-green-400) 30%, transparent);outline-offset:2px}
   ::-webkit-scrollbar{width:8px;height:8px}
   ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:999px}
+  html:not(.dark) ::-webkit-scrollbar-thumb{background:#cbd5e1}
   .wrap{max-width:none;width:100%;margin:0;padding:32px 24px 48px}
+  .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .page-head-main{min-width:0}
+  .theme-toggle{
+    appearance:none;flex:0 0 auto;
+    width:36px;height:36px;
+    display:grid;place-items:center;
+    border-radius:999px;
+    border:1px solid var(--ui-border);
+    background:var(--ui-bg-elevated);
+    color:var(--ui-text-muted);
+    cursor:pointer;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .theme-toggle:hover{color:var(--ui-text-highlighted);border-color:var(--ui-text-dimmed)}
+  .theme-toggle:active{transform:scale(.96)}
+  .theme-toggle svg{width:18px;height:18px}
+  .theme-toggle .icon-sun{display:none}
+  .theme-toggle .icon-moon{display:block}
+  .dark .theme-toggle .icon-sun{display:block}
+  .dark .theme-toggle .icon-moon{display:none}
   .title{
     margin:0;
     font-size:22px;
@@ -146,6 +193,10 @@
   .badge.failed{background:color-mix(in srgb, #ef4444 10%, transparent);color:#fca5a5;border-color:color-mix(in srgb, #ef4444 18%, transparent)}
   .badge.preview{background:color-mix(in srgb, #f59e0b 10%, transparent);color:#fcd34d;border-color:color-mix(in srgb, #f59e0b 18%, transparent)}
   .badge.pending{background:color-mix(in srgb, #64748b 10%, transparent);color:#94a3b8;border-color:color-mix(in srgb, #64748b 18%, transparent)}
+  html:not(.dark) .badge.passed{background:#effdf5;color:#007f45;border-color:#b3f5d1}
+  html:not(.dark) .badge.failed{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+  html:not(.dark) .badge.preview{background:#fffbeb;color:#b45309;border-color:#fde68a}
+  html:not(.dark) .badge.pending{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
   .cell-reason{max-width:200px;font-size:12px;line-height:1.5;color:var(--ui-text-toned)}
   .cell-reason:empty::before{content:"—";color:var(--ui-text-dimmed)}
   .btn-edit{
@@ -237,11 +288,19 @@
 </head>
 <body>
   <div class="wrap">
-    <h1 class="title">Cool Test</h1>
-    <div class="suite-path">
-      <span id="suitePath" class="suite-path-text">.cooltest/report-*.json</span>
-      <span class="suite-sep">·</span>
-      <span id="suiteTime" class="suite-time"></span>
+    <div class="page-head">
+      <div class="page-head-main">
+        <h1 class="title">Cool Test</h1>
+        <div class="suite-path">
+          <span id="suitePath" class="suite-path-text">.cooltest/report-*.json</span>
+          <span class="suite-sep">·</span>
+          <span id="suiteTime" class="suite-time"></span>
+        </div>
+      </div>
+      <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle light/dark theme" title="Toggle light/dark theme" aria-pressed="false">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
     </div>
 
     <div class="controls">
@@ -340,6 +399,28 @@
 <script>
 (function(){
   const $ = s => document.querySelector(s);
+
+  // ---- theme (dark / light) ----
+  const THEME_KEY = 'cooltest:theme';
+  const themeMeta = document.getElementById('themeColorMeta');
+  const themeBtn = $('#themeToggle');
+  function isDark(){ return document.documentElement.classList.contains('dark'); }
+  function applyTheme(mode){
+    const dark = mode === 'dark';
+    document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.dataset.theme = mode;
+    if(themeMeta) themeMeta.setAttribute('content', dark ? '#020420' : '#ffffff');
+    if(themeBtn) themeBtn.setAttribute('aria-pressed', String(dark));
+    try{ localStorage.setItem(THEME_KEY, mode); }catch(_){}
+  }
+  // Sync meta/aria with the mode chosen by the pre-paint script.
+  applyTheme(isDark() ? 'dark' : 'light');
+  if(themeBtn){
+    themeBtn.addEventListener('click', ()=>{
+      applyTheme(isDark() ? 'light' : 'dark');
+    });
+  }
+
   let raw = {};
   try{ raw = JSON.parse(document.getElementById('__COOLTEST_DATA__').textContent.trim()||'{}'); }catch(e){ raw={suiteName:'',createdAt:'',cases:[]}; }
 

@@ -86,6 +86,7 @@ mkdir -p .cooltest/tmp
      - 优先尝试 File System Access API 写回 `report-<ts>.json`；
      - 不支持则触发下载 `report-<ts>.json` 并提示用户覆盖，同时 `localStorage` 暂存。
    - 提供筛选（按状态/类型）与导出 CSV。
+   - 右上角图标按钮切换深色/浅色主题，选择通过 `localStorage` 持久化。
 
 ## References
 
