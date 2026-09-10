@@ -1,11 +1,12 @@
 ---
 name: cool-teach
-description: A teaching skill for multi-course learning workspaces (.coolteach) — creates courses, generates bite-sized lessons with validated tasks, and opens a local web preview using a fixed HTML template. Use when user triggers /cool-teach plus natural language (e.g. "/cool-teach I want to learn SEO", "/cool-teach continue SEO", "/cool-teach list my courses", "/cool-teach open SEO").
+version: 0.3.7
+description: A teaching skill for multi-course learning workspaces (.coolteach) — creates courses, generates bite-sized lessons with validated tasks, and opens a local web preview using a fixed HTML template. Use when the user expresses a course-learning intent in natural language (e.g. "I want to learn SEO", "continue SEO", "list my courses", "open SEO"); a /cool-teach prefix is also accepted but not required.
 ---
 
 # Cool Teach — Multi-Course Learning Workspace
 
-> Trigger: `/cool-teach` prefix + natural language. Not auto-triggered without the prefix. The text after `/cool-teach` is free-form intent — use LLM to classify. Examples: `/cool-teach I want to learn SEO` · `/cool-teach continue SEO` · `/cool-teach list my courses` · `/cool-teach open SEO course`
+> Trigger: natural language expressing a course-learning intent — no prefix required (a `/cool-teach` prefix is also accepted and means the same). Use LLM to classify the free-form intent. Examples: `I want to learn SEO` · `continue SEO` · `list my courses` · `open SEO course`
 
 ## Workspace Structure (Simplified)
 
@@ -33,14 +34,14 @@ See `references/course-schema.md` and `references/lesson-format.md` for JSON/Mar
 
 ### 1. Trigger & Parse
 
-1. Trigger is `/cool-teach` **prefix** (must start with `/cool-teach`). The text after it is **free-form natural language** describing intent — use LLM to classify the intent:
-   - **list** — e.g. `/cool-teach 查看我有哪些课程` / `/cool-teach list my courses` / `/cool-teach 有哪些课` → list all courses from `.coolteach/courses.json`.
-   - **new** — e.g. `/cool-teach 我想学习 SEO` / `/cool-teach I want to learn SEO` → create a new course (then run mission interview).
-   - **continue / add-lesson** — e.g. `/cool-teach 继续学习 SEO` / `/cool-teach continue SEO` → add a lesson to the matched existing course.
-   - **preview / open** — e.g. `/cool-teach 打开SEO课程` / `/cool-teach open SEO` → regenerate and open `preview.html` for the matched course.
-   - **bare `/cool-teach`** (no trailing text) → interactive: list courses, ask which to continue or whether to create a new one.
+1. Trigger is **free-form natural language** expressing a course-learning intent — no prefix required. An optional `/cool-teach` prefix is accepted and equivalent (strip it before parsing). Use LLM to classify the intent:
+   - **list** — e.g. `查看我有哪些课程` / `list my courses` / `有哪些课` → list all courses from `.coolteach/courses.json`.
+   - **new** — e.g. `我想学习 SEO` / `I want to learn SEO` → create a new course (then run mission interview).
+   - **continue / add-lesson** — e.g. `继续学习 SEO` / `continue SEO` → add a lesson to the matched existing course.
+   - **preview / open** — e.g. `打开SEO课程` / `open SEO` → regenerate and open `preview.html` for the matched course.
+   - **ambiguous / bare greeting** (no clear intent) → interactive: list courses, ask which to continue or whether to create a new one.
 2. Extract the course topic/slug from the natural language via LLM (e.g. "SEO" → `seo`, "Rust CLI" → `rust-cli`). Confirm the derived slug with the user if ambiguous.
-3. Natural language **without** the `/cool-teach` prefix (e.g. "teach me SEO") does **not** auto-trigger. Respond with: `Run /cool-teach ... to start` (e.g. `Run /cool-teach 我想学习 SEO`).
+3. Only trigger on genuine course-learning intents (creating, continuing, listing, or opening courses). Unrelated chatter must not activate this skill.
 
 ### 2. Initialize `.coolteach`
 
@@ -74,7 +75,7 @@ Read `.coolteach/courses.json` and print a table: `slug | title | lessons | stat
 
 > **Do not create a course without a mission interview.** The mission grounds all teaching; a bad mission produces abstract lessons with no zone of proximal development.
 
-1. **Mission interview (blocking, must complete before any file write)** — Collect the mission via **sequential interactive interview, one question at a time**. If the user already stated a topic (e.g. `/cool-teach 我想学习 SEO`), still interview before writing. For **each** question, call `ask_user_question` once with **3 default options plus custom input** (allow the user to pick an option or type their own answer). Wait for the answer before asking the next question.
+1. **Mission interview (blocking, must complete before any file write)** — Collect the mission via **sequential interactive interview, one question at a time**. If the user already stated a topic (e.g. `我想学习 SEO`), still interview before writing. For **each** question, call `ask_user_question` once with **3 default options plus custom input** (allow the user to pick an option or type their own answer). Wait for the answer before asking the next question.
    - **Q1 Why** — 1–3 sentences: the concrete real-world outcome when they have this skill (push for "so that …" not "to learn …"). Example options: `Bring sustainable organic traffic to my site and reduce paid-ads dependency` / `Ship a usable feature to my project` / `Solve a concrete bottleneck at work` + custom input.
    - **Q2 Success** — 2–3 observable things they will be able to do (e.g. "independently run keyword research → rewrite 1 page → get top-20"). Example options: `Independently complete a small real task end-to-end` / `Review and improve an existing page/project with a checklist` / `Read data and iterate continuously` + custom input.
    - **Q3 Constraints** — time budget (e.g. 1h/week), prior knowledge, preferences, scope limits. Example options: `1h/week, prefer hands-on over theory` / `2h/week, some basics, want quick wins` / `4h/week, want systematic depth` + custom input.
@@ -109,7 +110,7 @@ Read `.coolteach/courses.json` and print a table: `slug | title | lessons | stat
 
 #### Resume / Select
 
-When user runs bare `/cool-teach` or the intent is ambiguous and multiple courses exist, list courses and ask which to continue, or to create a new one.
+When the intent is ambiguous and multiple courses exist, list courses and ask which to continue, or to create a new one.
 
 ### 4. Lesson Generation
 
@@ -145,6 +146,35 @@ Rules:
 - Tasks: array of **frozen task JSON objects** (see below). No free-form quizzes. Each task must validate against the frozen schema. Generate 2–5 tasks per lesson.
 - Do **not** inline `<style>` or `<script>` in lessons. All rendering is done by the fixed template.
 
+#### Generation Rule (Critical — prevents `Untitled Course` / `No lessons yet`)
+
+> **Never hand-concatenate the lesson JS string.** The `body` Markdown routinely contains `"`, `'`, `` ` ``, `\n`, and `</script>` — manual interpolation breaks the file and the preview silently falls back to `Untitled Course` with empty lessons (the exact bug fixed in v0.3.7).
+
+**Must do:**
+```js
+// 1. Build a plain JS object
+const lesson = { id, slug, title, summary, tags, body, bodyHtml: "", tasks };
+// 2. Serialize with JSON.stringify — it escapes ", \, \n, etc. for you
+const out = 'window.__LESSONS__ = window.__LESSONS__ || [];\n'
+        + 'window.__LESSONS__.push(' + JSON.stringify(lesson, null, 2) + ');\n';
+// 3. Escape </script> so the preview HTML never breaks
+const safe = out.replace(/<\/script>/gi, '<\\/script>');
+fs.writeFileSync(`lessons/${id}-${slug}.js`, safe, 'utf8');
+```
+
+**Forbidden:**
+```js
+// ❌ breaks on any " inside body
+fs.writeFileSync(`lessons/${id}-${slug}.js`,
+  `window.__LESSONS__.push({"body": "${body}"})`); // body contains " → SyntaxError
+```
+
+**Validation before write (mandatory):**
+```bash
+node -e "global.window={}; eval(require('fs').readFileSync('lessons/0001-xxx.js','utf8')); console.log('lessons', window.__LESSONS__.length)"
+# must print 1 and not throw "Invalid or unexpected token"
+```
+
 #### Frozen Task Schema (4 types only)
 
 To eliminate interaction bugs, the template JS implements **exactly** these four types; the agent must not invent new types.
@@ -163,15 +193,27 @@ Example:
 {"id":"0001-task-1","type":"choice","question":"抓取→索引→排名的正确顺序是？","options":["抓取→索引→排名","索引→抓取→排名","排名→抓取→索引","抓取→排名→索引"],"answer":0,"explain":"爬虫先发现，再入库，才有资格排名。"}
 ```
 
-Validation before write:
-- JSON parses.
+Validation before write (all must pass):
+- `node -e` eval above passes — lesson JS parses and `window.__LESSONS__` is non-empty (catches unescaped `"` / `</script>` bugs).
+- Lesson JSON parses (`JSON.parse(JSON.stringify(lesson))` round-trip).
 - `type` is one of the 4.
-- Required fields present and types correct.
-- If invalid, fix and re-validate; never write broken tasks.
+- Required task fields present and types correct; `answer` ranges, `steps` checks, etc. per table.
+- If any check fails, fix and re-validate; never write broken lessons. A broken lesson silently produces `Untitled Course` / `No lessons yet` — treat it as a blocker.
 
 ### 5. Preview Generation (Fixed Template)
 
 **No per-lesson ad-hoc HTML.** All previews are rendered by the single fixed template at `skills/cool-teach/assets/template.html`.
+
+#### 5.0 Version Check (mandatory before every generation)
+
+`skills/cool-teach/VERSION` is the single source of truth (e.g. `0.1.0`):
+
+1. Read `skills/cool-teach/VERSION` → `SKILL_VER`.
+2. Check `.coolteach/assets/app.js` contains `TEMPLATE_VERSION = '<SKILL_VER>'`. If the file is missing or the version differs, re-copy **all** shared assets (`style.css`, `app.js`, `marked.min.js`, `template.html`) from `skills/cool-teach/assets/` before generating — never generate a preview against stale assets.
+3. When generating `preview.html`, replace `{{COOLTEACH_VERSION}}` with `SKILL_VER` and `{{GENERATED_AT}}` with the current ISO-8601 timestamp (this fills the header brand `vX.Y.Z` and `window.__COOLTEACH_META__`).
+4. Bump rule: any change to `assets/` must bump `VERSION`, the `version:` frontmatter above, and `TEMPLATE_VERSION` in `app.js` together.
+
+At runtime `app.js` compares `window.__COOLTEACH_META__.templateVersion` against `TEMPLATE_VERSION`; on mismatch the header version badge turns red and a `console.warn` is emitted — regenerate the preview to fix.
 
 #### Build Steps
 
@@ -179,7 +221,8 @@ Validation before write:
 2. Optionally pre-render `body` Markdown to `bodyHtml` using a deterministic converter so the template can be pure HTML+JS. If not pre-rendered, the template's tiny parser will render `body` as fallback.
 3. Generate `preview.html` from `assets/template.html`:
    - Inline course data once: `<script>window.__COURSE__ = <JSON>;</script>` (use `JSON.stringify(course, null, 2)` and escape `</script>`).
-   - Ensure `preview.html` loads lessons in order: one `<script src="./lessons/NNNN-*.js"></script>` per lesson (sorted), then `../../assets/app.js`. No `data.js` aggregation — each lesson JS is directly embedded.
+   - Inline generator meta: `<script>window.__COOLTEACH_META__ = {"templateVersion":"<SKILL_VER>","generatedAt":"<ISO-8601>"};</script>`.
+   - Ensure `preview.html` loads lessons in order: one `<script src="./lessons/NNNN-*.js"></script>` per lesson (sorted), then `../../assets/marked.min.js` and `../../assets/app.js`. No `data.js` aggregation — each lesson JS is directly embedded.
    - Keep `course.json` / `lessons/*.js` as source of truth on disk; `preview.html` is derived.
 
 #### Template Guarantees
